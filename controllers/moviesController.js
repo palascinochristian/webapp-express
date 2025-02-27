@@ -2,7 +2,10 @@ const connection = require("../data/db");
 
 // Index
 const index = (req, res) => {
-  const sql = "SELECT * FROM movies";
+  const sql = `SELECT movies.*, ROUND(AVG(reviews.vote)) as avg_vote 
+  FROM movies 
+  LEFT JOIN reviews ON movies.id = reviews.movie_id 
+  GROUP BY movies.id`;
   connection.execute(sql, (err, results) => {
     if (err) {
       return res.status(500).json({
@@ -19,10 +22,11 @@ const index = (req, res) => {
 const show = (req, res) => {
   const { id } = req.params;
 
-  const movieSql = `
-    SELECT * 
-    FROM movies
-    WHERE id = ?`;
+  const movieSql = `SELECT movies.*, ROUND(AVG(reviews.vote)) as avg_vote 
+  FROM movies 
+  LEFT JOIN reviews ON movies.id = reviews.movie_id 
+  WHERE movies.id = ? 
+  GROUP BY movies.id `;
 
   connection.execute(movieSql, [id], (err, results) => {
     if (err) {
