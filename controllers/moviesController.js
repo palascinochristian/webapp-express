@@ -26,13 +26,13 @@ const show = (req, res) => {
   FROM movies 
   LEFT JOIN reviews ON movies.id = reviews.movie_id 
   WHERE movies.id = ? 
-  GROUP BY movies.id `;
+  GROUP BY movies.id`;
 
   connection.execute(movieSql, [id], (err, results) => {
     if (err) {
       return res.status(500).json({
         error: "Query Error",
-        message: `Database query failed: ${bookSql}`,
+        message: `Database query failed: ${movieSql}`,
       });
     }
     const movie = results[0];
@@ -63,4 +63,23 @@ const show = (req, res) => {
   });
 };
 
-module.exports = { index, show };
+// Store Review
+const storeReview = (req, res) => {
+  const { id } = req.params;
+  const { name, vote, text } = req.body;
+
+  const reviewSql =
+    "INSERT INTO reviews (movie_id, name, text, vote) VALUES (?, ?, ?, ?)";
+
+  connection.execute(reviewSql, [id, name, text, vote], (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        error: "Query Error",
+        message: `Database query failed: ${reviewSql}`,
+      });
+    }
+    res.status(201).json({ id: results.insertId });
+  });
+};
+
+module.exports = { index, show, storeReview };
