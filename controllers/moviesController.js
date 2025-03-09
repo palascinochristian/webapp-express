@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const connection = require("../data/db");
 
 // Index
@@ -64,22 +65,34 @@ const show = (req, res) => {
 };
 
 // Store Review
-const storeReview = (req, res) => {
+const storeReview = async (req, res) => {
   const { id } = req.params;
-  const { name, vote, text } = req.body;
+  const { vote, text } = req.body;
+
+  if (!req.user || !req.user.username) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: user not found in token" });
+  }
+
+  const userName = req.user.username; // Recupera il nome dal token
 
   const reviewSql =
     "INSERT INTO reviews (movie_id, name, text, vote) VALUES (?, ?, ?, ?)";
 
-  connection.execute(reviewSql, [id, name, text, vote], (err, results) => {
-    if (err) {
-      return res.status(500).json({
-        error: "Query Error",
-        message: `Database query failed: ${reviewSql}`,
-      });
-    }
-    res.status(201).json({ id: results.insertId });
-  });
+  try {
+    const [results] = await connection
+      .promise()
+      .query(reviewSql, [id, userName, text, vote]);
+    res
+      .status(201)
+      .json({ message: "Recensione salvata", id: results.insertId });
+  } catch (err) {
+    res.status(500).json({
+      error: "Internal Server Error",
+      message: `Database query failed: ${err.message}`,
+    });
+  }
 };
 
 module.exports = { index, show, storeReview };
